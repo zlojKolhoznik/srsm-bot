@@ -35,6 +35,8 @@ def make_inline_keyboard(items: dict[str, str], rows: list[int]):
             row.append(buttons[0])
             buttons = buttons[1:]
         keyboard.append(row)
+        if (len(buttons) == 0):
+            break
     if len(buttons) > 0:
         keyboard.append(buttons)
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -63,8 +65,85 @@ async def activate_punkt(message: Message, state: FSMContext):
     for punkt in inactive_punkts:
         punkts_elements[punkt[0]] = punkt[0]
     punkts_keyboard = make_inline_keyboard(punkts_elements, [2, 2])
-    await message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер пункту, який хочете активувати', reply_markup=punkts_keyboard)
+    await message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер гуртожитку, пункт підтримки в якому тепер доступний', reply_markup=punkts_keyboard)
     await state.set_state(QuestionTypes.choosing_activating_punkt)
+
+
+@dp.callback_query_state_filter(QuestionTypes.choosing_activating_punkt, custom_filters.ChatId(PROD_CHAT_ID))
+async def activate_punkt_callback(query: filters.CallbackQuery, state: FSMContext):
+    punkt = query.data
+    db.activate_punkt(punkt)
+    await query.message.edit_text(f'Пункт підтримки у гуртожитку номер {punkt} позначено як доступний')
+    subscribed_users = db.get_users_subscribed_for(punkt)
+    for user_id in subscribed_users:
+        await query.message.bot.send_message(chat_id=user_id, text=f'Пункт підтримки у гуртожитку {punkt}, на який Ви підписані, тепер доступний.
+                                             Ви будете отримувати сповіщення про його роботу. Якщо Ви більше не хочете отримувати сповіщення, виберіть /unsubscribe')
+    await state.clear()
+
+
+@dp.message(custom_filters.ChatId(PROD_CHAT_ID), filters.Command('deactivate_punkt'))
+async def deactivate_punkt(message: Message, state: FSMContext):
+    active_punkts = db.get_active_punkts()
+    punkts_elements = dict()
+    for punkt in active_punkts:
+        punkts_elements[punkt[0]] = punkt[0]
+    punkts_keyboard = make_inline_keyboard(punkts_elements, [2, 2])
+    await message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер гуртожитку, в якому пункт підтримки більше не доступний', reply_markup=punkts_keyboard)
+    await state.set_state(QuestionTypes.choosing_deactivating_punkt)
+
+
+@dp.callback_query_state_filter(QuestionTypes.choosing_deactivating_punkt, custom_filters.ChatId(PROD_CHAT_ID))
+async def deactivate_punkt_callback(query: filters.CallbackQuery, state: FSMContext):
+    punkt = query.data
+    db.deactivate_punkt(punkt)
+    await query.message.edit_text(f'Пункт підтримки у гуртожитку {punkt} позначено як недоступний')
+    subscribed_users = db.get_users_subscribed_for(punkt)
+    for user_id in subscribed_users:
+        await query.message.bot.send_message(chat_id=user_id, text=f'Пункт підтримки у гуртожитку {punkt}, на який Ви підписані, більше не доступний.
+                                             Ми Вас сповістимо, як тільки пункт знову стане доступним, а Ваша підписка автоматично відновиться. 
+                                             Тим часом Ви можете підписатись на будь-який інший пункт підтримки.
+                                             Якщо ви більше не хочете отримувати сповіщення, виберіть /unsubscribe')
+    await state.clear()
+
+
+@dp.message(custom_filters.PrivateChat(), filters.Command('subscribe'))
+def subscribe(message: Message, state: FSMContext):
+    punkts = db.get_active_punkts()
+    puntks_with_subscription = db.get_user_subscriptions(message.from_user.id)
+    punkts_elements = dict()
+    for punkt in punkts:
+        if (punkt[0] not in puntks_with_subscription):
+            punkts_elements[punkt[0]] = punkt[0]
+    punkts_keyboard = make_inline_keyboard(punkts_elements, [2, 2])
+    message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер гуртожитку, на який хочете підписатись', reply_markup=punkts_keyboard)
+    state.set_state(QuestionTypes.choosing_subscription)
+
+
+@dp.callback_query_state_filter(QuestionTypes.choosing_subscription, custom_filters.PrivateChat())
+def subscribe_callback(query: filters.CallbackQuery, state: FSMContext):
+    punkt = query.data
+    db.subscribe_user_to_punkt(query.from_user.id, punkt)
+    query.message.edit_text(f'Ви успішно підписались на пункт підтримки у гуртожитку {punkt}. Щоб відмінити підписку, виберіть /unsubscribe')
+    state.clear()
+
+
+@dp.message(custom_filters.PrivateChat(), filters.Command('unsubscribe'))
+def unsubscribe(message: Message, state: FSMContext):
+    punkts = db.get_user_subscriptions(message.from_user.id)
+    punkts_elements = dict()
+    for punkt in punkts:
+        punkts_elements[punkt] = punkt
+    punkts_keyboard = make_inline_keyboard(punkts_elements, [2, 2])
+    message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер гуртожитку, від пункту підтримку у якому хочете відписатись', reply_markup=punkts_keyboard)
+    state.set_state(QuestionTypes.choosing_unsubscription)
+
+
+@dp.callback_query_state_filter(QuestionTypes.choosing_unsubscription, custom_filters.PrivateChat())
+def unsubscribe_callback(query: filters.CallbackQuery, state: FSMContext):
+    punkt = query.data
+    db.unsubscribe_user_from_punkt(query.from_user.id, punkt)
+    query.message.edit_text(f'Ви успішно відписались від пункту підтримки у гуртожитку {punkt}. Щоб підписатись на інший пункт, виберіть /subscribe')
+    state.clear()
 
 
 @dp.message(custom_filters.PrivateChat(), StateFilter(QuestionTypes.choosing_type))

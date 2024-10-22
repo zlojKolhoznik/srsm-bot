@@ -85,3 +85,8 @@ class BotDB:
     def unsubscribe_user_from_punkt(self, user_id: int, punkt_id: str):
         self.cur.execute("DELETE FROM user_punkt WHERE user_id=? AND punkt_id=?", (user_id, punkt_id))
         self.conn.commit()
+
+    
+    def get_user_subscriptions(self, user_id: int):
+        self.cur.execute("SELECT punkt_id FROM user_punkt WHERE user_id=?", (user_id,))
+        return [row[0] for row in self.cur.fetchall()]
