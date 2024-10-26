@@ -8,3 +8,5 @@ class QuestionTypes(StatesGroup):
     choosing_deactivating_punkt = State()
     choosing_subscribing_punkt = State()
     choosing_unsubscribing_punkt = State()
+    choosing_opening_punkt = State()
+    choosing_closing_punkt = State()

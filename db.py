@@ -41,7 +41,7 @@ class BotDB:
     
 
     def get_users_subscribed_for(self, punkt_id: str):
-        self.cur.execute("SELECT UNIQUE user_id FROM user_punkt WHERE gurt=?", (punkt_id,))
+        self.cur.execute("SELECT DISTINCT user_id FROM user_punkt WHERE gurt=?", (punkt_id,))
         return [row[0] for row in self.cur.fetchall()]
     
 
@@ -61,32 +61,52 @@ class BotDB:
     
 
     def activate_punkt(self, punkt_id: str):
-        self.cur.execute("UPDATE punkty SET is_active=1 WHERE punkt_id=?", (punkt_id,))
+        self.cur.execute("UPDATE punkty SET is_active=1 WHERE gurt=?", (punkt_id,))
         self.conn.commit()
 
 
     def deactivate_punkt(self, punkt_id: str):
-        self.cur.execute("UPDATE punkty SET is_active=0 WHERE punkt_id=?", (punkt_id,))
+        self.cur.execute("UPDATE punkty SET is_active=0 WHERE gurt=?", (punkt_id,))
         self.conn.commit()
 
 
     def is_user_subscribed_for_punkt(self, user_id: int, punkt_id: str):
-        self.cur.execute("SELECT * FROM user_punkt WHERE user_id=? AND punkt_id=?", (user_id, punkt_id))
+        self.cur.execute("SELECT * FROM user_punkt WHERE user_id=? AND gurt=?", (user_id, punkt_id))
         return self.cur.fetchone() is not None
     
 
     def subscribe_user_to_punkt(self, user_id: int, punkt_id: str):
         if self.is_user_subscribed_for_punkt(user_id, punkt_id):
             return
-        self.cur.execute("INSERT INTO user_punkt (user_id, punkt_id) VALUES (?, ?)", (user_id, punkt_id))
+        self.cur.execute("INSERT INTO user_punkt (user_id, gurt) VALUES (?, ?)", (user_id, punkt_id))
         self.conn.commit()
     
 
     def unsubscribe_user_from_punkt(self, user_id: int, punkt_id: str):
-        self.cur.execute("DELETE FROM user_punkt WHERE user_id=? AND punkt_id=?", (user_id, punkt_id))
+        self.cur.execute("DELETE FROM user_punkt WHERE user_id=? AND gurt=?", (user_id, punkt_id))
         self.conn.commit()
 
     
     def get_user_subscriptions(self, user_id: int):
-        self.cur.execute("SELECT punkt_id FROM user_punkt WHERE user_id=?", (user_id,))
+        self.cur.execute("SELECT gurt FROM user_punkt WHERE user_id=?", (user_id,))
         return [row[0] for row in self.cur.fetchall()]
+    
+
+    def get_open_punkts(self):
+        self.cur.execute("SELECT * FROM punkty WHERE is_open=1")
+        return self.cur.fetchall()
+    
+
+    def get_closed_punkts(self):
+        self.cur.execute("SELECT * FROM punkty WHERE is_open=0")
+        return self.cur.fetchall()
+    
+    
+    def open_punkt(self, punkt_id: str):
+        self.cur.execute("UPDATE punkty SET is_open=1 WHERE gurt=?", (punkt_id,))
+        self.conn.commit()
+    
+
+    def close_punkt(self, punkt_id: str):
+        self.cur.execute("UPDATE punkty SET is_open=0 WHERE gurt=?", (punkt_id,))
+        self.conn.commit()

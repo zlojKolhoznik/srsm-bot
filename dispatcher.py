@@ -8,10 +8,10 @@ import constants
 
 logging.basicConfig(level=logging.INFO)
 
-if not constants.PROD_BOT_TOKEN:
+if not constants.TEST_BOT_TOKEN:
     exit('No bot token provided')
 
-token = constants.PROD_BOT_TOKEN
+token = constants.TEST_BOT_TOKEN
 
 bot = Bot(token=token, parse_mode=ParseMode.HTML)
 dp = Dispatcher(storage=MemoryStorage())
