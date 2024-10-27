@@ -60,7 +60,7 @@ async def start(message: Message, state: FSMContext):
     await state.set_state(QuestionTypes.choosing_type)
 
 
-@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('activate_punkt'))
+@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('activate'))
 async def activate_punkt(message: Message, state: FSMContext):
     db = BotDB('users.db')
     inactive_punkts = db.get_inactive_punkts()
@@ -86,7 +86,7 @@ async def activate_punkt_callback(query: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('deactivate_punkt'))
+@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('deactivate'))
 async def deactivate_punkt(message: Message, state: FSMContext):
     db = BotDB('users.db')
     active_punkts = db.get_active_punkts()
@@ -113,7 +113,7 @@ async def deactivate_punkt_callback(query: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('open_punkt'))
+@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('open'))
 async def open_punkt(message: Message, state: FSMContext):
     dp = BotDB('users.db')
     active_punkts = dp.get_closed_punkts()
@@ -141,7 +141,7 @@ async def open_punkt_callback(query: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('close_punkt'))
+@dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('close'))
 async def close_punkt(message: Message, state: FSMContext):
     db = BotDB('users.db')
     active_punkts = db.get_open_punkts()
@@ -168,22 +168,22 @@ async def close_punkt_callback(query: CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@dp.message(custom_filters.PrivateChat(), filters.Command('close_punkt'))
+@dp.message(custom_filters.PrivateChat(), filters.Command('close'))
 async def no_access_to_close_punkt(message: Message):
     await message.bot.send_message(chat_id=message.chat.id, text='Ви не маєте доступу до цієї команди')
 
 
-@dp.message(custom_filters.PrivateChat(), filters.Command('open_punkt'))
+@dp.message(custom_filters.PrivateChat(), filters.Command('open'))
 async def no_access_to_open_punkt(message: Message):
     await message.bot.send_message(chat_id=message.chat.id, text='Ви не маєте доступу до цієї команди')
 
 
-@dp.message(custom_filters.PrivateChat(), filters.Command('activate_punkt'))
+@dp.message(custom_filters.PrivateChat(), filters.Command('activate'))
 async def no_access_to_activate_punkt(message: Message):
     await message.bot.send_message(chat_id=message.chat.id, text='Ви не маєте доступу до цієї команди')
 
 
-@dp.message(custom_filters.PrivateChat(), filters.Command('deactivate_punkt'))
+@dp.message(custom_filters.PrivateChat(), filters.Command('deactivate'))
 async def no_access_to_deactivate_punkt(message: Message):
     await message.bot.send_message(chat_id=message.chat.id, text='Ви не маєте доступу до цієї команди')
 
