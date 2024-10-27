@@ -66,7 +66,7 @@ class BotDB:
 
 
     def deactivate_punkt(self, punkt_id: str):
-        self.cur.execute("UPDATE punkty SET is_active=0 WHERE gurt=?", (punkt_id,))
+        self.cur.execute("UPDATE punkty SET is_active=0, is_open=0 WHERE gurt=?", (punkt_id,))
         self.conn.commit()
 
 
@@ -93,12 +93,12 @@ class BotDB:
     
 
     def get_open_punkts(self):
-        self.cur.execute("SELECT * FROM punkty WHERE is_open=1")
+        self.cur.execute("SELECT * FROM punkty WHERE is_open=1 AND is_active=1")
         return self.cur.fetchall()
     
 
     def get_closed_punkts(self):
-        self.cur.execute("SELECT * FROM punkty WHERE is_open=0")
+        self.cur.execute("SELECT * FROM punkty WHERE is_open=0 AND is_active=1")
         return self.cur.fetchall()
     
     
