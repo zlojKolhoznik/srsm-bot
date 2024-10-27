@@ -116,12 +116,12 @@ async def deactivate_punkt_callback(query: CallbackQuery, state: FSMContext):
 @dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('open'))
 async def open_punkt(message: Message, state: FSMContext):
     dp = BotDB('users.db')
-    active_punkts = dp.get_closed_punkts()
-    if len(active_punkts) == 0:
+    closed_punkts = dp.get_closed_punkts()
+    if len(closed_punkts) == 0:
         await message.bot.send_message(chat_id=message.chat.id, text='Всі пункти підтримки відкриті')
         return
     punkts_elements = dict()
-    for punkt in active_punkts:
+    for punkt in closed_punkts:
         punkts_elements[punkt[0]] = punkt[0]
     punkts_keyboard = make_inline_keyboard(punkts_elements, [2, 2])
     await message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер гуртожитку, пункт підтримки в якому відкрився', reply_markup=punkts_keyboard)
@@ -144,12 +144,12 @@ async def open_punkt_callback(query: CallbackQuery, state: FSMContext):
 @dp.message(custom_filters.ChatId(TEST_CHAT_ID), filters.Command('close'))
 async def close_punkt(message: Message, state: FSMContext):
     db = BotDB('users.db')
-    active_punkts = db.get_open_punkts()
-    if len(active_punkts) == 0:
+    open_punkts = db.get_open_punkts()
+    if len(open_punkts) == 0:
         await message.bot.send_message(chat_id=message.chat.id, text='Всі пункти підтримки закриті')
         return
     punkts_elements = dict()
-    for punkt in active_punkts:
+    for punkt in open_punkts:
         punkts_elements[punkt[0]] = punkt[0]
     punkts_keyboard = make_inline_keyboard(punkts_elements, [2, 2])
     await message.bot.send_message(chat_id=message.chat.id, text='Оберіть номер гуртожитку, пункт підтримки в якому закрився', reply_markup=punkts_keyboard)
